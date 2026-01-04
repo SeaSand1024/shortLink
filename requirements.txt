@@ -1,8 +1,10 @@
-fastapi
+fastapi~=0.128.0
 uvicorn
 pymysql
-pydantic
+pydantic~=2.12.5
 python-multipart
-redis
-asyncio
-aiomysql
+redis~=7.0.1
+asyncio~=4.0.0
+aiomysql~=0.3.2
+
+aiohttp~=3.13.3

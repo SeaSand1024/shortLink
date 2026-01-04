@@ -254,7 +254,8 @@ async def create_short_url(request: CreateShortUrlRequest):
                     short_code = request.custom_code.strip()
                     try:
                         await cursor.execute(
-                            "INSERT INTO url_mapping (short_code, original_url, expired_at, creator, created_at) VALUES (%s, %s, %s, %s, %s)",
+                            "INSERT INTO url_mapping (short_code, original_url, expired_at, creator, created_at) "
+                            "VALUES (%s, %s, %s, %s, %s)",
                             (short_code, original_url, expired_at, request.creator, created_at)
                         )
                     except aiomysql.IntegrityError:
@@ -267,7 +268,8 @@ async def create_short_url(request: CreateShortUrlRequest):
                         candidate_code = base62_encode(time.time_ns())[-8:]  # 取后8位，减小长度
                         try:
                             await cursor.execute(
-                                "INSERT INTO url_mapping (short_code, original_url, expired_at, creator, created_at) VALUES (%s, %s, %s, %s, %s)",
+                                "INSERT INTO url_mapping (short_code, original_url, expired_at, creator, created_at) "
+                                "VALUES (%s, %s, %s, %s, %s)",
                                 (candidate_code, original_url, expired_at, request.creator, created_at)
                             )
                             short_code = candidate_code
@@ -283,7 +285,8 @@ async def create_short_url(request: CreateShortUrlRequest):
 
                 # 初始化统计记录
                 await cursor.execute(
-                    "INSERT INTO url_stats (short_code, total_visits) VALUES (%s, 0) ON DUPLICATE KEY UPDATE short_code=short_code",
+                    "INSERT INTO url_stats (short_code, total_visits) VALUES (%s, 0) ON DUPLICATE KEY UPDATE "
+                    "short_code=short_code",
                     (short_code,)
                 )
 
