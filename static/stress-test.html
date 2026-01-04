@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>压测工具 - 短链生成系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .testing {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stat-card-2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-card-3 {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .stat-card-4 {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航 -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-tachometer-alt text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">压测工具</h1>
+                        <p class="text-sm opacity-90">短链生成系统性能测试</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/static/index.html" class="hover:text-yellow-300 transition">
+                        <i class="fas fa-home mr-2"></i>返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区 -->
+    <div class="container mx-auto px-6 py-8">
+        <!-- 压测配置 -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fas fa-cog text-purple-600 mr-3"></i>
+                压测配置
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-bullseye mr-2 text-blue-500"></i>测试目标
+                    </label>
+                    <select id="testTarget" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="create">短链生成</option>
+                        <option value="redirect">短链跳转</option>
+                        <option value="mixed">混合测试</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-users mr-2 text-green-500"></i>并发用户数
+                    </label>
+                    <input type="number" id="concurrency" value="100" min="1" max="10000" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-redo mr-2 text-orange-500"></i>总请求数
+                    </label>
+                    <input type="number" id="totalRequests" value="10000" min="1" max="1000000" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clock mr-2 text-red-500"></i>持续时间（秒）
+                    </label>
+                    <input type="number" id="duration" value="60" min="1" max="3600" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button id="startBtn" onclick="startTest()" 
+                    class="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-teal-700 transition shadow-lg">
+                    <i class="fas fa-play mr-2"></i>开始压测
+                </button>
+                <button id="stopBtn" onclick="stopTest()" disabled
+                    class="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-red-700 hover:to-pink-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-stop mr-2"></i>停止压测
+                </button>
+            </div>
+        </div>
+
+        <!-- 实时统计 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card rounded-xl p-6 text-white shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">当前QPS</p>
+                        <p class="text-3xl font-bold mt-2" id="currentQPS">0</p>
+                    </div>
+                    <i class="fas fa-bolt text-5xl opacity-30"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card-2 rounded-xl p-6 text-white shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">平均响应时间</p>
+                        <p class="text-3xl font-bold mt-2" id="avgResponseTime">0ms</p>
+                    </div>
+                    <i class="fas fa-clock text-5xl opacity-30"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card-3 rounded-xl p-6 text-white shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">成功率</p>
+                        <p class="text-3xl font-bold mt-2" id="successRate">0%</p>
+                    </div>
+                    <i class="fas fa-check-circle text-5xl opacity-30"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card-4 rounded-xl p-6 text-white shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">已完成请求</p>
+                        <p class="text-3xl font-bold mt-2" id="completedRequests">0</p>
+                    </div>
+                    <i class="fas fa-tasks text-5xl opacity-30"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">测试进度</span>
+                <span class="text-sm font-medium text-gray-700" id="progressText">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div id="progressBar" class="progress-bar bg-gradient-to-r from-purple-600 to-blue-600 h-4 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                    QPS 实时曲线
+                </h3>
+                <div id="qpsChart" style="height: 300px;"></div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold mb-4 flex items-center">
+                    <i class="fas fa-chart-area text-green-600 mr-2"></i>
+                    响应时间分布
+                </h3>
+                <div id="responseTimeChart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- 详细结果 -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fas fa-list-alt text-indigo-600 mr-3"></i>
+                测试结果详情
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">总请求数</span>
+                        <i class="fas fa-list text-gray-400"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800" id="totalRequestsResult">0</p>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">成功请求</span>
+                        <i class="fas fa-check text-green-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-green-600" id="successRequests">0</p>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">失败请求</span>
+                        <i class="fas fa-times text-red-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-red-600" id="failedRequests">0</p>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">最小响应时间</span>
+                        <i class="fas fa-arrow-down text-blue-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-blue-600" id="minResponseTime">0ms</p>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">最大响应时间</span>
+                        <i class="fas fa-arrow-up text-orange-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-orange-600" id="maxResponseTime">0ms</p>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">P95响应时间</span>
+                        <i class="fas fa-chart-bar text-purple-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-purple-600" id="p95ResponseTime">0ms</p>
+                </div>
+            </div>
+
+            <!-- 导出按钮 -->
+            <div class="mt-6 flex space-x-4">
+                <button onclick="exportResults()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-download mr-2"></i>导出结果
+                </button>
+                <button onclick="clearResults()" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    <i class="fas fa-trash mr-2"></i>清空结果
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="mb-2">短链生成系统压测工具 v1.0.0</p>
+            <p class="text-sm text-gray-400">支持10万QPS高并发压力测试</p>
+            <p class="mt-4">由 <a href="https://with.woa.com/" style="color: #8A2BE2;" target="_blank">with</a> 通过自然语言生成</p>
+        </div>
+    </footer>
+
+    <script src="stress-test.js"></script>
+</body>
+</html>

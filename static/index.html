@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短链生成系统 - 支持10万QPS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stat-card-2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-card-3 {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .stat-card-4 {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航 -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-link text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">短链生成系统</h1>
+                        <p class="text-sm opacity-90">支持10万QPS高并发访问</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="#create" class="hover:text-yellow-300 transition">
+                        <i class="fas fa-plus-circle mr-2"></i>创建短链
+                    </a>
+                    <a href="#list" class="hover:text-yellow-300 transition">
+                        <i class="fas fa-list mr-2"></i>短链列表
+                    </a>
+                    <a href="#stats" class="hover:text-yellow-300 transition">
+                        <i class="fas fa-chart-bar mr-2"></i>数据统计
+                    </a>
+                    <a href="/static/stress-test.html" class="bg-yellow-400 text-purple-900 px-4 py-2 rounded-lg hover:bg-yellow-300 transition font-semibold shadow-lg">
+                        <i class="fas fa-tachometer-alt mr-2"></i>🚀 压测工具
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区 -->
+    <div class="container mx-auto px-6 py-8">
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 fade-in">
+            <div class="stat-card rounded-xl p-6 text-white shadow-lg card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">总短链数</p>
+                        <p class="text-3xl font-bold mt-2" id="totalUrls">0</p>
+                    </div>
+                    <i class="fas fa-link text-5xl opacity-30"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card-2 rounded-xl p-6 text-white shadow-lg card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">总访问量</p>
+                        <p class="text-3xl font-bold mt-2" id="totalVisits">0</p>
+                    </div>
+                    <i class="fas fa-eye text-5xl opacity-30"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card-3 rounded-xl p-6 text-white shadow-lg card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">今日新增</p>
+                        <p class="text-3xl font-bold mt-2" id="todayNew">0</p>
+                    </div>
+                    <i class="fas fa-calendar-plus text-5xl opacity-30"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card-4 rounded-xl p-6 text-white shadow-lg card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">系统状态</p>
+                        <p class="text-xl font-bold mt-2" id="systemStatus">
+                            <i class="fas fa-check-circle"></i> 运行中
+                        </p>
+                    </div>
+                    <i class="fas fa-server text-5xl opacity-30"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 创建短链区域 -->
+        <div id="create" class="bg-white rounded-xl shadow-lg p-8 mb-8 fade-in">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fas fa-magic text-purple-600 mr-3"></i>
+                创建短链
+            </h2>
+            
+            <form id="createForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-globe mr-2 text-blue-500"></i>原始链接 *
+                    </label>
+                    <input 
+                        type="url" 
+                        id="originalUrl" 
+                        required
+                        value="https://www.baidu.com"
+                        placeholder="https://example.com/very/long/url"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    >
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-code mr-2 text-green-500"></i>自定义短码（可选）
+                        </label>
+                        <input 
+                            type="text" 
+                            id="customCode"
+                            placeholder="my-link"
+                            pattern="[a-zA-Z0-9-_]+"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">仅支持字母、数字、横线和下划线</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-clock mr-2 text-orange-500"></i>有效期（天）
+                        </label>
+                        <input 
+                            type="number" 
+                            id="expiredDays"
+                            placeholder="永久有效"
+                            min="1"
+                            max="3650"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-indigo-500"></i>创建者
+                        </label>
+                        <input 
+                            type="text" 
+                            id="creator"
+                            placeholder="您的名字"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        >
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button 
+                        type="submit"
+                        class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition shadow-lg hover:shadow-xl"
+                    >
+                        <i class="fas fa-rocket mr-2"></i>立即生成
+                    </button>
+                    <button 
+                        type="reset"
+                        class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                    >
+                        <i class="fas fa-redo mr-2"></i>重置
+                    </button>
+                </div>
+            </form>
+            
+            <!-- 生成结果 -->
+            <div id="result" class="hidden mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-2 border-green-200">
+                <h3 class="text-lg font-bold text-green-700 mb-4 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>短链生成成功！
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <label class="text-sm font-medium text-gray-700 w-24">短链地址:</label>
+                        <input 
+                            type="text" 
+                            id="shortUrl" 
+                            readonly
+                            class="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg font-mono text-blue-600"
+                        >
+                        <button 
+                            onclick="copyToClipboard('shortUrl')"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        >
+                            <i class="fas fa-copy mr-2"></i>复制
+                        </button>
+                        <a 
+                            id="visitLink"
+                            href="#"
+                            target="_blank"
+                            class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center"
+                        >
+                            <i class="fas fa-external-link-alt mr-2"></i>访问
+                        </a>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <label class="text-sm font-medium text-gray-700 w-24">短码:</label>
+                        <span id="shortCode" class="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg font-mono font-bold text-purple-600"></span>
+                        <button 
+                            onclick="viewStats()"
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                        >
+                            <i class="fas fa-chart-line mr-2"></i>查看统计
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 热门短链 -->
+        <div id="stats" class="bg-white rounded-xl shadow-lg p-8 mb-8 fade-in">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fas fa-fire text-red-500 mr-3"></i>
+                热门短链 TOP 10
+            </h2>
+            <div id="topUrls" class="space-y-3">
+                <!-- 动态加载 -->
+            </div>
+        </div>
+
+        <!-- 短链列表 -->
+        <div id="list" class="bg-white rounded-xl shadow-lg p-8 fade-in">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-list text-blue-600 mr-3"></i>
+                    短链列表
+                </h2>
+                <button 
+                    onclick="loadUrlList()"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                    <i class="fas fa-sync-alt mr-2"></i>刷新
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">短码</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">原始链接</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">访问量</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建者</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="urlList" class="bg-white divide-y divide-gray-200">
+                        <!-- 动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页 -->
+            <div class="flex items-center justify-between mt-6">
+                <div class="text-sm text-gray-700">
+                    共 <span id="totalCount" class="font-semibold">0</span> 条记录
+                </div>
+                <div class="flex space-x-2" id="pagination">
+                    <!-- 动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="mb-2">短链生成系统 v1.0.0 | 支持10万QPS高并发访问</p>
+            <p class="text-sm text-gray-400">采用 FastAPI + MySQL + Redis 架构 | Base62编码算法</p>
+            <p class="mt-4">由 <a href="https://with.woa.com/" style="color: #8A2BE2;" target="_blank">with</a> 通过自然语言生成</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
