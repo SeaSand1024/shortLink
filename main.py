@@ -284,11 +284,11 @@ async def create_short_url(request: CreateShortUrlRequest):
                         raise HTTPException(status_code=500, detail="短链生成失败，请稍后重试")
 
                 # 初始化统计记录
-                await cursor.execute(
-                    "INSERT INTO url_stats (short_code, total_visits) VALUES (%s, 0) ON DUPLICATE KEY UPDATE "
-                    "short_code=short_code",
-                    (short_code,)
-                )
+                # await cursor.execute(
+                #     "INSERT INTO url_stats (short_code, total_visits) VALUES (%s, 0) ON DUPLICATE KEY UPDATE "
+                #     "short_code=short_code",
+                #     (short_code,)
+                # )
 
                 await conn.commit()
                 # 异步写入Redis缓存，不阻塞主流程

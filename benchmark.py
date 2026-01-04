@@ -4,7 +4,7 @@ import random
 import statistics
 import sys
 import time
-
+import uuid
 import aiohttp
 
 # 默认配置

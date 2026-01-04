@@ -330,7 +330,7 @@ async function executeRequest(testTarget) {
         const responseTime = Date.now() - requestStart;
         testState.responseTimes.push(responseTime);
 
-        if (response.ok || response.status === 302 || response.type === 'opaqueredirect') {
+        if (response.ok || response.status === 302 ||response.status === 405|| response.type === 'opaqueredirect') {
             testState.successRequests++;
             
             // 如果是创建短链成功，保存短码供后续使用
