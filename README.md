@@ -104,10 +104,10 @@ docker build -t short-url-system .
 2. 运行容器
 ```bash
 docker run -d -p 8000:8000 \
-  -e DB_HOST=11.142.154.110 \
+  -e DB_HOST= \
   -e DB_PORT=3306 \
-  -e DB_USER=with_givkdopomavmizll \
-  -e DB_PASSWORD=akzM%6i2uQc)QK \
+  -e DB_USER= \
+  -e DB_PASSWORD= \
   -e DB_NAME=p6sgrep8 \
   -e REDIS_HOST=your_redis_host \
   -e REDIS_PORT=6379 \
